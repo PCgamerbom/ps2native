@@ -101,12 +101,24 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.summary = QPlainTextEdit()
         self.summary.setReadOnly(True)
+        self.file_filter = QLineEdit()
+        self.file_filter.setPlaceholderText("Filtrar por caminho ou formato…")
+        self.file_filter.textChanged.connect(self.filter_files)
+        self.t_files = _table(["Caminho", "Formato", "Tamanho (bytes)", "Setor (LBA)"])
+        self.t_files.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        for column in range(1, 4):
+            self.t_files.horizontalHeader().setSectionResizeMode(column, QHeaderView.ResizeToContents)
         self.t_exec = _table(["Caminho", "Formato", "Tamanho (bytes)", "Principal"])
         self.t_funcs = _table(["Entrada", "Nome", "Instruções", "Status", "Não suportadas"])
         self.t_unsup = _table(["Instrução — motivo", "Ocorrências"])
         self.full = QPlainTextEdit()
         self.full.setReadOnly(True)
         self.tabs.addTab(self.summary, "Resumo")
+        files_tab = QWidget()
+        files_layout = QVBoxLayout(files_tab)
+        files_layout.addWidget(self.file_filter)
+        files_layout.addWidget(self.t_files)
+        self.tabs.addTab(files_tab, "Arquivos da ISO")
         self.tabs.addTab(self.t_exec, "Executáveis")
         self.tabs.addTab(self.t_funcs, "Funções")
         self.tabs.addTab(self.t_unsup, "Não suportado")
@@ -150,6 +162,9 @@ class MainWindow(QMainWindow):
     def finished(self, rep: IsoReport) -> None:
         self.report = rep
         self.stage.setText("Análise concluída.")
+        _fill(self.t_files, [(f["path"], f["format"] or "Não identificado", f["size"], f["lba"])
+                             for f in rep.files])
+        self.filter_files(self.file_filter.text())
         main_path = rep.main_executable["path"] if rep.main_executable else None
         _fill(self.t_exec, [(e["path"], e["format"], e["size"], "sim" if e["path"] == main_path else "")
                             for e in rep.executables])
@@ -174,6 +189,15 @@ class MainWindow(QMainWindow):
         self.full.setPlainText(md)
         self.b_export.setEnabled(True)
         self.b_pkg.setEnabled(bool(a and can_package(a)))
+
+    def filter_files(self, text: str) -> None:
+        query = text.casefold().strip()
+        for row in range(self.t_files.rowCount()):
+            matches = not query or any(
+                query in self.t_files.item(row, column).text().casefold()
+                for column in (0, 1)
+            )
+            self.t_files.setRowHidden(row, not matches)
 
     def export(self) -> None:
         if not self.report:

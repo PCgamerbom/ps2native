@@ -62,7 +62,7 @@ def to_markdown(obj) -> str:
     L += ["", "### Executáveis/módulos encontrados", ""]
     L += [f"- `{e['path']}` — {e['format']} — {e['size']} bytes" for e in r.executables] or ["- (nenhum)"]
     L += ["", "### Todos os arquivos", "", "| caminho | tamanho | formato |", "|---|---|---|"]
-    L += [f"| {f['path']} | {f['size']} | {f['format'] or ''} |" for f in r.files[:2000]]
+    L += [f"| {f['path']} | {f['size']} | {f['format'] or 'Não identificado'} |" for f in r.files[:2000]]
     if r.elf:
         L += ["", _elf_md(r.elf)]
     return "\n".join(L) + "\n"
