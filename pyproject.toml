@@ -1,0 +1,12 @@
+[project]
+name = "ps2native"
+version = "0.1.0"
+description = "Protótipo experimental de análise e portabilidade de jogos de PS2 (engenharia reversa)"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.6"]
+
+[project.scripts]
+ps2native = "ps2native.cli:main"
